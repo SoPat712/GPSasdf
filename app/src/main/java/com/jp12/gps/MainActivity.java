@@ -32,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
     private final int REQUEST_PERMISSION_COARSE_LOCATION = 1;
     Location location = null;
 
+    Float sumDist = 0.0f;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
                 getSystemService(Context.LOCATION_SERVICE);
         LocationListener locationListener = new GPSListener();
         System.out.println("activated stuff");
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, (float) 0.1, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,  0, locationListener);
         System.out.println("updating?");
     }
     @Override
@@ -113,43 +115,49 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private class GPSListener implements LocationListener {
-        
+
         @Override
         public void onLocationChanged(Location loc) {
             System.out.println("loc changed");
-            if(location == null){
-                System.out.println("asdfasdfasf");
+            try {
+                if(location == null){
+                    Thread.sleep(5000);
+                } else{
+                    if(loc.distanceTo(location) < 0.15){
+
+                    }else{
+
+                        sumDist += loc.distanceTo(location);
+                    }
+                }
                 location = loc;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-            textView.setText("");
-            String cityName = null;
+            String address = null;
             Geocoder geocoder = new Geocoder(getBaseContext(), Locale.getDefault());
             List<Address> addresses;
             try {
                 addresses = geocoder.getFromLocation(loc.getLatitude(),
                         loc.getLongitude(), 1);
-                cityName = addresses.get(0).getAddressLine(0);
-                System.out.println(cityName);
+                address = addresses.get(0).getAddressLine(0);
+                System.out.println(address);
             } catch (Exception e) {
                 e.printStackTrace();
             }
             String s;
 
             if(location != null) {
-                s = "Starting long: "+location.getLongitude() + "\n" + "Starting lat: " + location.getLatitude() + "\n" +"Longitude: " + loc.getLongitude() + "\n" + "Latitude: " + loc.getLatitude() + "\n\nAddress: "
-                        + cityName;
+                s = "Last long: "+location.getLongitude() + "\n" + "Last lat: " + location.getLatitude() + "\n" +"Longitude: " + loc.getLongitude() + "\n" + "Latitude: " + loc.getLatitude() + "\n\nAddress: "
+                        + address;
 
             } else{
-                s = "Starting long: "+"..." + "\n" + "Starting lat: " + "..." + "\n" +"Longitude: " + loc.getLongitude() + "\n" + "Latitude: " + loc.getLatitude() + "\n\nAddress: "
-                        + cityName;
+                s = "Last long: "+"..." + "\n" + "Last lat: " + "..." + "\n" +"Longitude: " + loc.getLongitude() + "\n" + "Latitude: " + loc.getLatitude() + "\n\nAddress: "
+                        + address;
             }
             System.out.println("adsf: "+s);
             textView.setText(s);
-            if(location != null){
-                textView2.setText(loc.distanceTo(location) + " m");
-
-            }
+            textView2.setText(sumDist + " m");
         }
-
     }
 }
