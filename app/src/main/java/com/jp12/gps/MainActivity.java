@@ -1,5 +1,6 @@
 package com.jp12.gps;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -19,6 +20,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,8 +33,9 @@ public class MainActivity extends AppCompatActivity {
     private final int REQUEST_PERMISSION_FINE_LOCATION = 1;
     private final int REQUEST_PERMISSION_COARSE_LOCATION = 1;
     Location location = null;
-
+    LocationManager locationManager;
     Float sumDist = 0.0f;
+    LocationListener locationListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,18 +60,37 @@ public class MainActivity extends AppCompatActivity {
             }
         } else {
             System.out.println("allowed already");
-            activateLocationService();
         }
     }
+    public void onPressed(View v){
+        Button b = findViewById(R.id.button);
+        if(b.getText().toString().equalsIgnoreCase("start tracking")){
+            sumDist = 0.0f;
+            Location location = null;
+            activateLocationService();
+            b.setText("Stop tracking");
+        } else{
+            pauseLocationService();
 
+            b.setText("Start tracking");
+
+        }
+    }
     @SuppressLint("MissingPermission")
     private void activateLocationService() {
-        LocationManager locationManager = (LocationManager)
+
+        locationManager = (LocationManager)
                 getSystemService(Context.LOCATION_SERVICE);
-        LocationListener locationListener = new GPSListener();
+        locationListener = new GPSListener();
         System.out.println("activated stuff");
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,  0, locationListener);
         System.out.println("updating?");
+    }
+    private void pauseLocationService(){
+        locationManager.removeUpdates(locationListener);
+        sumDist = 0.0f;
+        textView2.setText("0.0" + " m");
+        Location location = null;
     }
     @Override
     protected void onDestroy() {
@@ -87,9 +109,9 @@ public class MainActivity extends AppCompatActivity {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Toast.makeText(MainActivity.this, "Permission Granted!", Toast.LENGTH_SHORT).show();
-                    activateLocationService();
                 } else {
                     Toast.makeText(MainActivity.this, "Permission Denied!", Toast.LENGTH_SHORT).show();
+                    showExplanation("Please allow Location Permission", "This app won't work without it", Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_PERMISSION_FINE_LOCATION);
                 }
         }
     }
@@ -148,16 +170,30 @@ public class MainActivity extends AppCompatActivity {
             String s;
 
             if(location != null) {
-                s = "Last long: "+location.getLongitude() + "\n" + "Last lat: " + location.getLatitude() + "\n" +"Longitude: " + loc.getLongitude() + "\n" + "Latitude: " + loc.getLatitude() + "\n\nAddress: "
+                s = "Longitude: " + loc.getLongitude() + "\n" + "Latitude: " + loc.getLatitude() + "\n\nAddress: "
                         + address;
 
             } else{
-                s = "Last long: "+"..." + "\n" + "Last lat: " + "..." + "\n" +"Longitude: " + loc.getLongitude() + "\n" + "Latitude: " + loc.getLatitude() + "\n\nAddress: "
+                s = "Longitude: " + loc.getLongitude() + "\n" + "Latitude: " + loc.getLatitude() + "\n\nAddress: "
                         + address;
             }
             System.out.println("adsf: "+s);
             textView.setText(s);
             textView2.setText(sumDist + " m");
+        }
+        @Override
+        public void onProviderEnabled(@NonNull String provider) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(@NonNull String provider) {
+
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+
         }
     }
 }
