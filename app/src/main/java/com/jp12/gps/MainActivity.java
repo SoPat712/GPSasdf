@@ -1,5 +1,7 @@
 package com.jp12.gps;
 
+import static android.os.SystemClock.elapsedRealtime;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,6 +27,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -36,7 +40,9 @@ public class MainActivity extends AppCompatActivity {
     LocationManager locationManager;
     Float sumDist = 0.0f;
     LocationListener locationListener;
-
+    ArrayList<String> locations = new ArrayList<>();
+    ArrayList<Long> timeSpentLocation = new ArrayList<Long>();
+    Long prevTimeOfUpdate = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,6 +72,10 @@ public class MainActivity extends AppCompatActivity {
         Button b = findViewById(R.id.button);
         if(b.getText().toString().equalsIgnoreCase("start tracking")){
             sumDist = 0.0f;
+            locations.clear();
+            timeSpentLocation.clear();
+            prevTimeOfUpdate = null;
+
             Location location = null;
             activateLocationService();
             b.setText("Stop tracking");
@@ -83,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
                 getSystemService(Context.LOCATION_SERVICE);
         locationListener = new GPSListener();
         System.out.println("activated stuff");
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,  0, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2500,  0.05f, locationListener);
         System.out.println("updating?");
     }
     private void pauseLocationService(){
@@ -142,8 +152,8 @@ public class MainActivity extends AppCompatActivity {
         public void onLocationChanged(Location loc) {
             System.out.println("loc changed");
             try {
+                Thread.sleep(5000);
                 if(location == null){
-                    Thread.sleep(5000);
                 } else{
                     if(loc.distanceTo(location) < 0.15){
 
@@ -153,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 location = loc;
-            } catch (InterruptedException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             String address = null;
@@ -167,19 +177,25 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            String s;
-
-            if(location != null) {
-                s = "Longitude: " + loc.getLongitude() + "\n" + "Latitude: " + loc.getLatitude() + "\n\nAddress: "
-                        + address;
-
-            } else{
-                s = "Longitude: " + loc.getLongitude() + "\n" + "Latitude: " + loc.getLatitude() + "\n\nAddress: "
-                        + address;
+            System.out.println(locations.contains(address));
+            if(locations.contains(address)){
+                System.out.println("prevTimeUpdate: " + prevTimeOfUpdate);
+                System.out.println("elapsedRealtime: " + elapsedRealtime());
+                System.out.println("locations.indexOf: " + locations.indexOf(address));
+                timeSpentLocation.set(locations.indexOf(address), timeSpentLocation.get(locations.indexOf(address)) + (elapsedRealtime() - prevTimeOfUpdate));
+            }else{
+                locations.add(address);
+                timeSpentLocation.add(0L);
             }
+            Long max = Collections.max(timeSpentLocation);
+            int index = timeSpentLocation.indexOf(max);
+            String s = "Longitude: " + loc.getLongitude() + "\n" + "Latitude: " + loc.getLatitude() + "\n\nAddress: "
+                    + address + "\nMost Popular Location: " + locations.get(index);
+            System.out.println("Time spent: "+ timeSpentLocation.get(index));
             System.out.println("adsf: "+s);
             textView.setText(s);
             textView2.setText(sumDist + " m");
+            prevTimeOfUpdate = elapsedRealtime();
         }
         @Override
         public void onProviderEnabled(@NonNull String provider) {
