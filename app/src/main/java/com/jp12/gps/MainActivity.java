@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         } else {
-            System.out.println("allowed already");
+            Log.d("TAG", "allowed already");
         }
     }
     public void onPressed(View v){
@@ -92,9 +92,10 @@ public class MainActivity extends AppCompatActivity {
         locationManager = (LocationManager)
                 getSystemService(Context.LOCATION_SERVICE);
         locationListener = new GPSListener();
-        System.out.println("activated stuff");
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2500,  0.05f, locationListener);
-        System.out.println("updating?");
+        Log.d("TAG", "activated stuff");
+
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0,  0, locationListener);
+        Log.d("TAG", "updating?");
     }
     private void pauseLocationService(){
         locationManager.removeUpdates(locationListener);
@@ -150,10 +151,10 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onLocationChanged(Location loc) {
-            System.out.println("loc changed");
+            Log.d("TAG","loc changed");
             try {
-                Thread.sleep(5000);
                 if(location == null){
+                    Thread.sleep(5000);
                 } else{
                     if(loc.distanceTo(location) < 0.15){
 
@@ -173,26 +174,28 @@ public class MainActivity extends AppCompatActivity {
                 addresses = geocoder.getFromLocation(loc.getLatitude(),
                         loc.getLongitude(), 1);
                 address = addresses.get(0).getAddressLine(0);
-                System.out.println(address);
+                Log.d("TAG",address);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            System.out.println(locations.contains(address));
+            Log.d("TAG","addrContain: "+locations.contains(address));
             if(locations.contains(address)){
-                System.out.println("prevTimeUpdate: " + prevTimeOfUpdate);
-                System.out.println("elapsedRealtime: " + elapsedRealtime());
-                System.out.println("locations.indexOf: " + locations.indexOf(address));
+                Log.d("TAG","prevTimeUpdate: " + prevTimeOfUpdate);
+                Log.d("TAG","elapsedRealtime: " + elapsedRealtime());
+                Log.d("TAG","locations.indexOf: " + locations.indexOf(address));
                 timeSpentLocation.set(locations.indexOf(address), timeSpentLocation.get(locations.indexOf(address)) + (elapsedRealtime() - prevTimeOfUpdate));
             }else{
                 locations.add(address);
+                Log.d("TAG", String.valueOf(locations));
                 timeSpentLocation.add(0L);
+                Log.d("TAG", String.valueOf(timeSpentLocation));
             }
             Long max = Collections.max(timeSpentLocation);
             int index = timeSpentLocation.indexOf(max);
             String s = "Longitude: " + loc.getLongitude() + "\n" + "Latitude: " + loc.getLatitude() + "\n\nAddress: "
-                    + address + "\nMost Popular Location: " + locations.get(index);
-            System.out.println("Time spent: "+ timeSpentLocation.get(index));
-            System.out.println("adsf: "+s);
+                    + address + "\nMost Popular Location: " + locations.get(index) + "\nTime spent: "+ (timeSpentLocation.get(index)/1000)%60;
+            Log.d("TAG","Time spent: "+ (timeSpentLocation.get(index)/1000)%60);
+            Log.d("TAG","adsf: "+s);
             textView.setText(s);
             textView2.setText(sumDist + " m");
             prevTimeOfUpdate = elapsedRealtime();
@@ -209,7 +212,6 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {
-
         }
     }
 }
